@@ -11,34 +11,8 @@ rabbitmq_vhost_{{ host_name }}:
   - name: {{ host_name }}
   - require:
     - service: rabbitmq_service
-  - require_in:
-    - rabbitmq_user: rabbitmq_user_{{ host.user }}
 {%- endif %}
 
-rabbitmq_user_{{ host.user }}:
-  rabbitmq_user.present:
-  - name: {{ host.user }}
-  - password: {{ host.password }}
-  - force: true
-  - perms:
-    - '{{ host_name }}':
-      - '.*'
-      - '.*'
-      - '.*'
-
-{%- for policy in host.get('policies', []) %}
-
-rabbitmq_policy_{{ host_name }}_{{ policy.name }}:
-  rabbitmq_policy.present:
-  - name: {{ policy.name }}
-  - pattern: {{ policy.pattern }}
-  - definition: {{ policy.definition|json }}
-  - priority: {{ policy.get('priority', 0)|int }}
-  - vhost: {{ host_name }}
-  - require:
-    - service: rabbitmq_service
-
-{%- endfor %}
 
 {%- else %}
 

@@ -7,6 +7,8 @@ RabbitMQ is a complete and highly reliable enterprise messaging system based on 
 Sample pillars
 ==============
 
+NON ACTUAL. See pillar.example
+
 Standalone Broker
 -----------------
 
