@@ -1,4 +1,5 @@
 include:
+- rabbitmq.server.pkg
 - rabbitmq.server.service
 - rabbitmq.server.ssl
 
