@@ -10,7 +10,6 @@ rabbitmq_server:
 rabbitmq_config:
   file.managed:
   - name: {{ server.config_file }}
-#  - source: salt://rabbitmq/files/rabbitmq.config
   - template: jinja
   - user: rabbitmq
   - group: rabbitmq

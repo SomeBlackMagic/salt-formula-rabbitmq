@@ -9,13 +9,18 @@
             'key_file': '/etc/rabbitmq/ssl/key.pem',
             'all_file': '/etc/rabbitmq/ssl/all_file.pem'
         },
-        'config_file': '/etc/rabbitmq/rabbitmq.config',
+        'config_file': '/etc/rabbitmq/rabbitmq.conf',
         'env_file': '/etc/rabbitmq/rabbitmq-env.conf',
-        'cookie_file': '/var/lib/rabbitmq/.erlang.cookie',
         'ulimit': 8192,
         'limits_file': '/etc/systemd/system/rabbitmq-server.service.d/limits.conf',
         'disk_free_limit': 50000000,
         'plugins': [],
+        'admin': {
+            'login': 'root',
+            'password': 'root'
+        },
+        'users': [
+        ],
         'bind': {
             'address': '0.0.0.0',
             'port': '5672',

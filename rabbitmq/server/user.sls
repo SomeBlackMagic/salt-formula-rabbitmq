@@ -1,15 +1,13 @@
 {%- from "rabbitmq/map.jinja" import server, rabbitmq_users with context %}
-{%- if server.enabled %}
 
 include:
 - rabbitmq.server.service
 
 {%- if server.admin is defined %}
-
 rabbit_user_admin_present:
   rabbitmq_user.present:
-    - name: {{ pillar['rabbitmq']['admin']['name'] }}
-    - password: {{ pillar['rabbitmq']['admin']['password'] }}
+    - name: {{ server.admin.login }}
+    - password: {{ server.admin.password }}
     - force: True
     - tags: administrator
     - perms:
@@ -17,7 +15,7 @@ rabbit_user_admin_present:
             - '.*'
             - '.*'
             - '.*'
-  {%- for vhost in pillar['rabbitmq'].get('vhosts', []) %}
+  {%- for vhost in pillar['rabbitmq']['server'].get('vhosts', []) %}
       {%- if vhost['present'] is defined and vhost['present'] is not none and vhost['present'] %}
         - '{{ vhost['name'] }}':
             - '.*'
@@ -28,65 +26,23 @@ rabbit_user_admin_present:
 {%- endif %}
 
 
-{%- endif %}
-
 {%- if server.users is defined %}
 
-  {%- for user_key, user in server.get('users', {}).iteritems() %}
+  {%- for user in pillar['rabbitmq']['server'].get('users', []) %}
 
-    {%- if user.enabled %}
-
-rabbitmq_add_user_{{ user.username }}:
+rabbit_user_{{ user['name'] }}:
+  {%- if user['present'] is defined and user['present'] is not none and user['present'] %}
   rabbitmq_user.present:
-  - name: {{ user.username }}
-  - password: {{ user.password }}
-  - force: true
-  - tags: {{ user.tags | default('', true) }}
-  - perms:
-    - '{{ user.vhost }}':
-      - '.*'
-      - '.*'
-      - '.*'
-
-      {%- for policy in user.get('policies', []) %}
-
-rabbitmq_policy_{{ user.vhost }}_{{ policy.name }}:
-  rabbitmq_policy.present:
-  - name: {{ policy.name }}
-  - pattern: {{ policy.pattern }}
-  - definition: {{ policy.definition|json }}
-  - priority: {{ policy.get('priority', 0)|int }}
-  - vhost: {{ user.vhost }}
-  - require:
-    - service: rabbitmq_service
-
-      {%- endfor %}
-
-      {%- else %}
-
-rabbitmq_drop_user_{{ user.user }}:
+    - name: '{{ user['name'] }}'
+    - password: {{ user['password'] }}
+    - force: True
+    - tags: {{ user.get('tags', []) }}
+    - perms: {{ user.get('perms', []) }}
+    {%- elif user['absent'] is defined and user['absent'] is not none and user['absent'] %}
   rabbitmq_user.absent:
-  - name: guest
-  - require:
-    - service: rabbitmq_service
-
-
-      {%- for policy in user.get('policies', []) %}
-
-rabbitmq_policy_{{ user.vhost }}_{{ policy.name }}:
-  rabbitmq_policy.present:
-  - name: {{ policy.name }}
-  - pattern: {{ policy.pattern }}
-  - definition: {{ policy.definition|json }}
-  - priority: {{ policy.get('priority', 0)|int }}
-  - vhost: {{ user.vhost }}
-  - require:
-    - service: rabbitmq_service
-
-      {%- endfor %}
-
+    - name: '{{ user['name'] }}'
     {%- endif %}
-
   {%- endfor %}
-
 {%- endif %}
+
+
