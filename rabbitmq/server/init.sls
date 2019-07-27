@@ -1,10 +1,13 @@
+{%- from "rabbitmq/map.jinja" import server with context %}
+
 include:
 - rabbitmq.server.pkg
 - rabbitmq.server.service
+-
+{%- if server.ssl.enabed %}
 - rabbitmq.server.ssl
+{%- endif %}
 
-{%- if not grains.get('noservices', False) %}
 - rabbitmq.server.plugin
 - rabbitmq.server.vhost
 - rabbitmq.server.user
-{%- endif %}

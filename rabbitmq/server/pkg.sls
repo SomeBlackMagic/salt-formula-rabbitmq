@@ -4,19 +4,17 @@
 erlang_repo:
   pkgrepo.managed:
     - humanname: Erlang Repository
-    - name: deb http://packages.erlang-solutions.com/ubuntu trusty contrib
+    - name: deb http://packages.erlang-solutions.com/ubuntu {{ grains['oscodename'] }} contrib
     - file: /etc/apt/sources.list.d/erlang.list
     - key_url: http://packages.erlang-solutions.com/ubuntu/erlang_solutions.asc
     - require_in:
     - pkg: esl-erlang
-rabbitmq_repo:
+rabbit_repo:
   pkgrepo.managed:
     - humanname: RabbitMQ Repository
-    - name: deb http://www.rabbitmq.com/debian/ testing main
+    - name: deb https://dl.bintray.com/rabbitmq/debian {{ grains['oscodename'] }} main
     - file: /etc/apt/sources.list.d/rabbitmq.list
-    - key_url: https://www.rabbitmq.com/rabbitmq-release-signing-key.asc
-    - require_in:
-    - pkg: rabbitmq-server
+    - key_url: https://github.com/rabbitmq/signing-keys/releases/download/2.0/rabbitmq-release-signing-key.asc
 
 {% elif grains['os'] == 'CentOS' and grains['osmajorrelease'][0] == '6' %}
 rabbitmq_repo:

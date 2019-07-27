@@ -1,3 +1,4 @@
+#SERVER
 {% set server = salt['grains.filter_by']({
     'default': {
         'ssl': {
@@ -14,6 +15,7 @@
         'ulimit': 8192,
         'limits_file': '/etc/systemd/system/rabbitmq-server.service.d/limits.conf',
         'disk_free_limit': 50000000,
+        'plugins': [],
         'bind': {
             'address': '0.0.0.0',
             'port': '5672',
@@ -44,15 +46,14 @@
     },
 }, merge=pillar.rabbitmq.get('server', {}), base='default') %}
 
+#cluster
 {% set cluster = salt['grains.filter_by']({
   'default': {
     'partition_handling': 'autoheal',
   },
 }, merge=salt['pillar.get']('rabbitmq:cluster'), base='default') %}
-{%- set rabbitmq_users = {} %}
-{%- for host_name, host in server.get('users', {}).iteritems() %}
-{%- do rabbitmq_users.update({host.username: [host]}) %}
-{%- endfor %}
+
+#monitoring
 {%- set monitoring = salt['grains.filter_by']({
   'default': {
     'low_memory': 100 * 1024 * 1024,

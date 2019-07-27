@@ -1,5 +1,4 @@
 {%- from "rabbitmq/map.jinja" import server with context %}
-{%- if server.enabled %}
 
 rabbitmq_server:
   pkg.installed:
@@ -11,7 +10,7 @@ rabbitmq_server:
 rabbitmq_config:
   file.managed:
   - name: {{ server.config_file }}
-  - source: salt://rabbitmq/files/rabbitmq.config
+#  - source: salt://rabbitmq/files/rabbitmq.config
   - template: jinja
   - user: rabbitmq
   - group: rabbitmq
@@ -19,6 +18,11 @@ rabbitmq_config:
   - mode: 440
   - require:
     - pkg: rabbitmq_server
+  - contents: |
+        # This file is managed by Salt, changes will be overwritten
+  {%- for config_line in pillar['rabbitmq'].get('config', []) %}
+        {{ config_line }}
+  {%- endfor %}
 
 {%- if grains.os_family == 'Debian' %}
 
@@ -33,109 +37,29 @@ rabbitmq_default_config:
   - require:
     - pkg: rabbitmq_server
 
-{%- endif %}
+{%- endif %}{# grains.os_family == 'Debian'  #}
 
 {%- if grains.init == 'systemd' %}
 
-rabbitmq_limits_systemd:
+rabbit_systemd_service_create:
+  file.directory:
+    - name: /etc/systemd/system/rabbitmq-server.service.d
+    - require:
+        - pkg: rabbitmq_server
+    - makedirs: True
+
+rabbit_set_ulimit:
   file.managed:
-  - name: {{ server.limits_file }}
-  - source: salt://rabbitmq/files/limits.conf
-  - template: jinja
-  - user: root
-  - group: root
-  - makedirs: True
-  - mode: 0644
-  - require:
-    - pkg: rabbitmq_server
+    - name: /etc/systemd/system/rabbitmq-server.service.d/limits.conf
+    - require:
+        - pkg: rabbitmq_server
+    - contents: |
+        [Service]
+        LimitNOFILE=65536
 
-{%- endif %}
-
-{%- if server.secret_key is defined and not grains.get('noservices', False) %}
-
-{%- if salt['cmd.shell']('cat '+server.cookie_file) != server.secret_key %}
-
-sleep_before_rabbitmq_stop:
-  cmd.run:
-  - name: sleep 30
-  - user: root
-  - require:
-    - pkg: rabbitmq_server
-    - file: rabbitmq_config
-{#    - cmd: enable_mgmt_plugin #}
-
-stop_rabbitmq_service:
-  cmd.run:
-  - name: service {{ server.service }} stop
-  - require:
-    - cmd: sleep_before_rabbitmq_stop
-
-/var/lib/rabbitmq:
-  file.directory
-
-rabbitmq_cookie:
-  file.managed:
-  - name: {{ server.cookie_file }}
-  - contents: {{ server.secret_key }}
-  - user: rabbitmq
-  - group: rabbitmq
-  - mode: 400
-  - require:
-    - file: /var/lib/rabbitmq
-    - cmd: stop_rabbitmq_service
-
-{%- if grains.os_family == 'Arch' %}
-
-/root/.erlang.cookie:
-  file.managed:
-  - contents: {{ server.secret_key }}
-  - user: root
-  - group: root
-  - mode: 400
-
-{%- endif %}
-
-sleep_before_rabbitmq_start:
-  cmd.run:
-  - name: sleep 30
-  - user: root
-  - require:
-    - cmd: stop_rabbitmq_service
-  - watch_in:
-    - service: rabbitmq_service
-
-{%- endif %}
-
-{%- endif %}
-
-{%- if not grains.get('noservices', False) %}
-rabbitmq_service:
+rabbit_systemd_service:
   service.running:
-  - enable: true
-  - name: {{ server.service }}
-  - watch:
-    - file: rabbitmq_config
-      {%- if grains.init == 'systemd' %}
-    - file: rabbitmq_limits_systemd
-      {%- endif %}
-      {% if server.ssl.enabled %}
-    - file: rabbitmq_cacertificate
-    - file: rabbitmq_certificate
-    - file: rabbitmq_server_key
-    - file: rabbitmq_ssl_all_file
-    - file: rabbitmq_ssl_env
-      {%- endif %}
-{%- endif %}
+    - name: rabbitmq-server
+    - enable: True
+{%- endif %}{# grains.init == 'systemd'  #}
 
-{%- if grains.get('virtual_subtype', None) == "Docker" %}
-
-rabbitmq_entrypoint:
-  file.managed:
-  - name: /entrypoint.sh
-  - template: jinja
-  - source: salt://rabbitmq/files/entrypoint.sh
-  - mode: 755
-
-{%- endif %}
-
-{%- endif %}
