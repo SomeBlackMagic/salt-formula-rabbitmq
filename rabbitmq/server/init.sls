@@ -4,7 +4,7 @@ include:
 - rabbitmq.server.pkg
 - rabbitmq.server.service
 -
-{%- if server.ssl.enabed %}
+{%- if server.ssl.enabled %}
 - rabbitmq.server.ssl
 {%- endif %}
 
