@@ -13,7 +13,7 @@ rabbitmq_plugin_{{ plugin }}:
   - runas: {{ server.plugins_runas_user }}
   {%- endif %}
   - require:
-    - service: rabbitmq_service
+    - service: rabbit_systemd_service
 
 {%- endfor %}
 
